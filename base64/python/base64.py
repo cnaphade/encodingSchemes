@@ -23,19 +23,20 @@ def base64mapping():
 def base64encode(text, mapping):
 	binary = 2
 	sextet = 6
+	octet = 8
 	output = ""
 	remainder_bits = ""
 
 	for i in range(len(text)):
 		current_byte = int.from_bytes(text[i:i+1], byteorder = 'big')
-		current_byte = bin(current_byte)[2:].rjust(8, '0')
+		current_byte = bin(current_byte)[2:].rjust(octet, '0')
 		
 		bits_to_include = max(0, sextet - len(remainder_bits))
 		current_bits = remainder_bits + current_byte[:bits_to_include]
 		remainder_bits = current_byte[bits_to_include:]
 		
 		output += mapping[int(current_bits, binary)]
-		if(len(remainder_bits) >= sextet):
+		if (len(remainder_bits) >= sextet):
 			output += mapping[int(remainder_bits[:sextet], binary)]
 			remainder_bits = remainder_bits[sextet:]
 
@@ -45,10 +46,25 @@ def base64encode(text, mapping):
 	output += '=' * padding_size
 	return output
 
-
 def base64decode(text, mapping):
-	# remember to use to_bytes() to convert int from binary string back to byte
-	return 0
+	binary = 2
+	sextet = 6
+	octet = 8
+	output = bytearray()
+	current_bits = ""
+
+	for i in range(len(text)):
+		if (text[i] == '='):
+			break
+
+		current_byte = bin(mapping[text[i]])[2:].rjust(sextet, '0')
+		current_bits += current_byte
+
+		if (len(current_bits) >= octet):
+			output.extend(int(current_bits[:octet], binary).to_bytes(1, byteorder = 'big'))
+			current_bits = current_bits[octet:]
+		  
+	return output
 
 def main(mapping):
 	parser = argparse.ArgumentParser()
@@ -61,13 +77,16 @@ def main(mapping):
 		file = open(args.in_file, 'rb')
 		text = file.read()
 		file.close()
+
 		encoded = open(args.out_file, 'w')
-		encoded.write(base64encode(text, mapping) + '\n')
+		encoded.write(base64encode(text, mapping))
 		encoded.close()
+
 	elif args.choice == 'decode':
 		file = open(args.in_file, 'r')
 		text = file.read()
 		file.close()
+
 		decoded = open(args.out_file, 'wb')
 		decoded.write(base64decode(text, mapping))
 		decoded.close()
