@@ -80,7 +80,23 @@ string base64encode(string text, map<int, char> mapping) {
 }
 
 string base64decode(string text, map<char, int> mapping) {
-	return "";
+	int binary = 2;
+	int sextet = 6;
+	int octet = 8;
+	string output = "";
+	string current_bits = "";
+	
+	for (int i = 0; i < text.length(); i++) {
+		if (text[i] == '=') break;
+
+		current_bits += bitset<6>(mapping[text[i]]).to_string();
+		if (current_bits.length() >= octet) {
+			output += stoi(current_bits.substr(0, octet), 0, 2);
+			current_bits = current_bits.substr(octet);
+		}
+	}
+	
+	return output;
 }
 
 int main(int argc, char *argv[]) {
